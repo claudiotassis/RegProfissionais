@@ -1,59 +1,52 @@
 // src/frontend/src/pages/index.js
-import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { Container, Typography, Button, Box } from '@mui/material';
 
-const Home = () => {
-  const [userName, setUserName] = useState('');
+const HomePage = () => {
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
-  // Busca o nome do usuário ao carregar a página
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('token'); // Assume que o token está armazenado no localStorage
-      const response = await fetch('http://localhost:3001/api/user', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
 
-      if (response.ok) {
+      try {
+        const response = await fetch('http://localhost:3001/user', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error('Usuário não autenticado');
+        }
+
         const data = await response.json();
-        setUserName(data.name); // Define o nome do usuário
-      } else {
-        setUserName(''); // Se der erro, remove o nome
+        setUser(data);
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+        router.push('/login');
       }
     };
 
     fetchUser();
-  }, []);
+  }, [router]);
 
-  const goToRegisterPage = () => {
-    router.push('/register');
-  };
-
-  const goToListPage = () => {
-    router.push('/list');
-  };
+  if (!user) return <Typography>Carregando...</Typography>;
 
   return (
     <Container>
-      <Typography variant="h4">Bem-vindo à página de Gestão Profissional, {userName || 'Usuário'}!</Typography>
+      <Typography variant="h4" marginBottom={4}>
+        Bem-vindo, {user.email}!
+      </Typography>
       <Box display="flex" flexDirection="column" alignItems="center" marginTop={4}>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={goToRegisterPage} 
-          style={{ marginBottom: '20px', width: '200px' }}
-        >
+        <Button variant="contained" color="primary" onClick={() => router.push('/register')} style={{ marginBottom: '20px', width: '200px' }}>
           Registrar Profissional
         </Button>
-        <Button 
-          variant="contained" 
-          color="secondary" 
-          onClick={goToListPage} 
-          style={{ width: '200px' }}
-        >
+        <Button variant="contained" color="secondary" onClick={() => router.push('/list')} style={{ width: '200px' }}>
           Listar Profissionais
         </Button>
       </Box>
@@ -61,4 +54,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default HomePage;

@@ -11,7 +11,15 @@ model Professional {
   id             String   @id @default(uuid())
   name           String
   email          String   @unique
-  qualifications String[] // Este campo deve permitir múltiplas qualificações
+  qualifications String[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
