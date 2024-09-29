@@ -1,5 +1,5 @@
 # Dependências
-/node_modules
+**/node_modules
 /.pnp
 .pnp.js
 
@@ -38,5 +38,6 @@ Thumbs.db
 *.zip
 *.tar.gz
 
-# Arquivos específicos do projeto (adicione conforme necessário)
-# /caminho/para/arquivo/grande
+# Arquivos específicos do Next.js
+.next/
+out/
