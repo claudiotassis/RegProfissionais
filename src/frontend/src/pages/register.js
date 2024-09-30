@@ -1,75 +1,62 @@
-// src/frontend/src/pages/register.js
-
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Container, Typography, TextField, Button, Box, Chip, Stack, Snackbar, Alert } from '@mui/material';
+import { Container, Typography, TextField, Button, Box, Stack, Snackbar, Alert, Grid } from '@mui/material';
 
 const RegisterProfessional = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [qualification, setQualification] = useState('');
-  const [qualifications, setQualifications] = useState([]);
+  const [qualifications, setQualifications] = useState([{ id: 1, value: '' }]); // Armazena as qualificações
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const router = useRouter();
 
+  const handleQualificationChange = (index, newValue) => {
+    const newQualifications = qualifications.map((qual, i) =>
+      i === index ? { ...qual, value: newValue } : qual
+    );
+    setQualifications(newQualifications);
+  };
+
   const handleAddQualification = () => {
-    if (qualification.trim() !== '') {
-      setQualifications([...qualifications, qualification.trim()]);
-      setQualification('');
-    }
+    setQualifications([...qualifications, { id: qualifications.length + 1, value: '' }]);
   };
 
   const handleRemoveQualification = (index) => {
-    setQualifications(qualifications.filter((_, i) => i !== index));
+    if (qualifications.length > 1) {
+      setQualifications(qualifications.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Iniciando o processo de registro');
-    console.log('Dados a serem enviados:', { name, email, qualifications });
-
+    const qualificationValues = qualifications.map((qual) => qual.value).filter((val) => val !== '');
+    
     try {
       const response = await fetch('http://localhost:3001/professionals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, qualifications }),
+        body: JSON.stringify({ name, email, qualifications: qualificationValues }),
       });
 
-      console.log('Resposta recebida. Status:', response.status);
-      
-      const responseText = await response.text();
-      console.log('Texto da resposta:', responseText);
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (error) {
-        console.error('Erro ao fazer parse do JSON:', error);
-        throw new Error('Resposta do servidor não é um JSON válido');
-      }
-
       if (!response.ok) {
-        throw new Error(data.error || 'Erro ao registrar profissional');
+        throw new Error('Erro ao registrar profissional');
       }
 
-      console.log('Profissional registrado com sucesso:', data);
       setSnackbarMessage('Profissional cadastrado com sucesso!');
       setSnackbarSeverity('success');
       setOpenSnackbar(true);
-      
+
       // Limpar o formulário
       setName('');
       setEmail('');
-      setQualifications([]);
+      setQualifications([{ id: 1, value: '' }]);
 
-      // Opcional: redirecionar após um breve delay
+      // Redirecionar após 2 segundos
       setTimeout(() => router.push('/list'), 2000);
     } catch (error) {
-      console.error('Erro ao registrar profissional:', error);
       setSnackbarMessage(error.message || 'Erro ao cadastrar profissional');
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
@@ -104,35 +91,53 @@ const RegisterProfessional = () => {
           required
           type="email"
         />
-        <Box display="flex" alignItems="center" marginY={2}>
-          <TextField
-            fullWidth
-            label="Qualificação"
-            value={qualification}
-            onChange={(e) => setQualification(e.target.value)}
-          />
-          <Button onClick={handleAddQualification} variant="contained" style={{ marginLeft: '10px' }}>
-            Adicionar
-          </Button>
-        </Box>
-        <Stack direction="row" spacing={1} flexWrap="wrap" marginY={2}>
-          {qualifications.map((qual, index) => (
-            <Chip
-              key={index}
-              label={qual}
-              onDelete={() => handleRemoveQualification(index)}
-            />
-          ))}
-        </Stack>
+
+        {/* Campos de qualificação dinâmicos */}
+        {qualifications.map((qualification, index) => (
+          <Grid container spacing={2} key={qualification.id} alignItems="center" sx={{ marginY: 1 }}>
+            <Grid item xs={10}>
+              <TextField
+                fullWidth
+                label={`Qualificação ${index + 1}`}
+                value={qualification.value}
+                onChange={(e) => handleQualificationChange(index, e.target.value)}
+                margin="normal"
+                style={{ width: '100%' }}
+              />
+            </Grid>
+
+            <Grid item xs={2} style={{ display: 'flex', alignItems: 'center' }}>
+              <Typography
+                onClick={() => handleRemoveQualification(index)}
+                color="primary"  // Muda o texto para azul
+                style={{ cursor: 'pointer', marginRight: 8 }}
+              >
+                REMOVER
+              </Typography>
+            </Grid>
+          </Grid>
+        ))}
+
+        {/* Opção de adicionar nova qualificação */}
+        <Typography
+          onClick={handleAddQualification}
+          color="primary"
+          style={{ cursor: 'pointer', marginTop: 16, marginBottom: 24 }}
+        >
+          ADICIONAR QUALIFICAÇÃO
+        </Typography>
+
+        {/* Botão de Cadastrar */}
         <Box display="flex" justifyContent="space-between" marginTop={4}>
           <Button type="submit" variant="contained" color="primary">
-            Registrar
+            Cadastrar
           </Button>
           <Button variant="outlined" color="secondary" onClick={() => router.push('/list')}>
             Listar Profissionais
           </Button>
         </Box>
       </Box>
+
       <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%' }}>
           {snackbarMessage}

@@ -1,7 +1,28 @@
-// src/frontend/src/pages/list.js
-
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Button, Box, List, ListItem, ListItemText, Chip, Stack, TextField, Dialog, DialogActions, DialogContent, DialogTitle, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  TextField,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Stack
+} from '@mui/material';
 import { useRouter } from 'next/router';
 
 const ListPage = () => {
@@ -9,7 +30,6 @@ const ListPage = () => {
   const [filteredProfessionals, setFilteredProfessionals] = useState([]);
   const [editingProfessional, setEditingProfessional] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [newQualification, setNewQualification] = useState('');
   const [filterText, setFilterText] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const router = useRouter();
@@ -37,7 +57,7 @@ const ListPage = () => {
   };
 
   const filterAndSortProfessionals = () => {
-    let filtered = professionals.filter(professional => 
+    let filtered = professionals.filter(professional =>
       professional.name.toLowerCase().includes(filterText.toLowerCase()) ||
       professional.email.toLowerCase().includes(filterText.toLowerCase()) ||
       professional.qualifications.some(qual => qual.toLowerCase().includes(filterText.toLowerCase()))
@@ -102,13 +122,19 @@ const ListPage = () => {
   };
 
   const handleAddQualification = () => {
-    if (newQualification.trim() !== '') {
-      setEditingProfessional({
-        ...editingProfessional,
-        qualifications: [...editingProfessional.qualifications, newQualification.trim()]
-      });
-      setNewQualification('');
-    }
+    setEditingProfessional({
+      ...editingProfessional,
+      qualifications: [...editingProfessional.qualifications, '']
+    });
+  };
+
+  const handleQualificationChange = (index, value) => {
+    const updatedQualifications = [...editingProfessional.qualifications];
+    updatedQualifications[index] = value;
+    setEditingProfessional({
+      ...editingProfessional,
+      qualifications: updatedQualifications
+    });
   };
 
   const handleRemoveQualification = (index) => {
@@ -121,7 +147,7 @@ const ListPage = () => {
   return (
     <Container>
       <Typography variant="h4" marginBottom={4}>Lista de Profissionais</Typography>
-      
+
       <Box display="flex" justifyContent="space-between" marginBottom={2}>
         <TextField
           label="Filtrar"
@@ -143,30 +169,38 @@ const ListPage = () => {
         </FormControl>
       </Box>
 
-      <List>
-        {filteredProfessionals.map((professional) => (
-          <ListItem key={professional.id} divider>
-            <ListItemText
-              primary={professional.name}
-              secondary={
-                <>
-                  <Typography component="span" variant="body2" color="text.primary">
-                    {professional.email}
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" marginTop={1}>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Nome</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Qualificações</TableCell>
+              <TableCell>Ações</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredProfessionals.map((professional) => (
+              <TableRow key={professional.id}>
+                <TableCell>{professional.name}</TableCell>
+                <TableCell>{professional.email}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
                     {professional.qualifications.map((qual, index) => (
                       <Chip key={index} label={qual} size="small" />
                     ))}
                   </Stack>
-                </>
-              }
-            />
-            <Button onClick={() => handleEditClick(professional)}>Editar</Button>
-            <Button onClick={() => handleDelete(professional.id)}>Deletar</Button>
-          </ListItem>
-        ))}
-      </List>
-      
+                </TableCell>
+                <TableCell>
+                  <Button onClick={() => handleEditClick(professional)}>Editar</Button>
+                  <Button onClick={() => handleDelete(professional.id)}>Deletar</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
       <Box display="flex" justifyContent="flex-start" marginTop={4}>
         <Button variant="contained" color="primary" onClick={() => router.push('/register')}>
           Registrar Novo Profissional
@@ -194,24 +228,22 @@ const ListPage = () => {
             onChange={(e) => setEditingProfessional({ ...editingProfessional, email: e.target.value })}
           />
           <Typography variant="h6" style={{ marginTop: '20px' }}>Qualificações</Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" marginY={2}>
+          <Stack spacing={2}>
             {editingProfessional?.qualifications.map((qual, index) => (
-              <Chip
-                key={index}
-                label={qual}
-                onDelete={() => handleRemoveQualification(index)}
-              />
+              <Box key={index} display="flex" alignItems="center">
+                <TextField
+                  fullWidth
+                  label={`Qualificação ${index + 1}`}
+                  value={qual}
+                  onChange={(e) => handleQualificationChange(index, e.target.value)}
+                />
+                <Button onClick={() => handleRemoveQualification(index)} color="error">Remover</Button>
+              </Box>
             ))}
           </Stack>
-          <Box display="flex" alignItems="center">
-            <TextField
-              fullWidth
-              label="Nova Qualificação"
-              value={newQualification}
-              onChange={(e) => setNewQualification(e.target.value)}
-            />
-            <Button onClick={handleAddQualification}>Adicionar</Button>
-          </Box>
+          <Button variant="contained" color="primary" onClick={handleAddQualification}>
+            Adicionar Qualificação
+          </Button>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
