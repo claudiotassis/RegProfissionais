@@ -104,3 +104,10 @@ O aplicativo frontend estará disponível em `http://localhost:3000`.
   - React
   - Next.js
   - Material-UI
+ 
+![image](https://github.com/user-attachments/assets/f2c93c4b-6387-4b35-80ff-7b3c0a965e42)
+![image](https://github.com/user-attachments/assets/18e4d128-d659-49a9-a3f2-1cfbdf3664f6)
+![image](https://github.com/user-attachments/assets/99f93921-1ec4-414a-a5b7-f61f0f3732ea)
+
+
+
