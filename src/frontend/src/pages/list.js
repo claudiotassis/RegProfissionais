@@ -25,6 +25,8 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/router';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 const ListPage = () => {
   const [professionals, setProfessionals] = useState([]);
   const [filteredProfessionals, setFilteredProfessionals] = useState([]);
@@ -32,6 +34,7 @@ const ListPage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [filterText, setFilterText] = useState('');
   const [sortBy, setSortBy] = useState('name');
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -44,15 +47,24 @@ const ListPage = () => {
 
   const fetchProfessionals = async () => {
     try {
-      const response = await fetch('http://localhost:3001/professionals');
+      const token = localStorage.getItem('token');
+      console.log('Fetching professionals from:', `${API_URL}/professionals`);
+      const response = await fetch(`${API_URL}/professionals`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         throw new Error('Erro ao buscar profissionais');
       }
       const data = await response.json();
+      console.log('Professionals data:', data);
       setProfessionals(data);
     } catch (error) {
       console.error('Erro ao buscar profissionais:', error);
-      alert('Erro ao buscar profissionais');
+      setError('Erro ao buscar profissionais: ' + error.message);
     }
   };
 
@@ -79,9 +91,13 @@ const ListPage = () => {
 
   const handleUpdate = async (id, updatedData) => {
     try {
-      const response = await fetch(`http://localhost:3001/professionals/${id}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/professionals/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updatedData),
       });
 
@@ -94,15 +110,19 @@ const ListPage = () => {
       fetchProfessionals();
     } catch (error) {
       console.error('Erro ao atualizar:', error);
-      alert('Erro ao atualizar profissional: ' + error.message);
+      setError('Erro ao atualizar profissional: ' + error.message);
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja deletar este profissional?')) {
       try {
-        const response = await fetch(`http://localhost:3001/professionals/${id}`, {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/professionals/${id}`, {
           method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (!response.ok) {
           const errorData = await response.json();
@@ -111,7 +131,7 @@ const ListPage = () => {
         fetchProfessionals();
       } catch (error) {
         console.error('Erro ao deletar:', error);
-        alert('Erro ao deletar profissional: ' + error.message);
+        setError('Erro ao deletar profissional: ' + error.message);
       }
     }
   };
@@ -143,6 +163,10 @@ const ListPage = () => {
       qualifications: editingProfessional.qualifications.filter((_, i) => i !== index)
     });
   };
+
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
 
   return (
     <Container>

@@ -1,5 +1,4 @@
-// src/frontend/src/pages/index.js
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { Container, Typography, Button, Box } from '@mui/material';
 
@@ -8,7 +7,7 @@ const HomePage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkAuth = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
         router.push('/login');
@@ -16,38 +15,69 @@ const HomePage = () => {
       }
 
       try {
-        const response = await fetch('http://localhost:3001/user', {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await fetch('/api/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
 
-        if (!response.ok) {
-          throw new Error('Usuário não autenticado');
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          throw new Error('Falha na autenticação');
         }
-
-        const data = await response.json();
-        setUser(data);
       } catch (error) {
-        console.error('Erro ao buscar dados do usuário:', error);
+        console.error('Erro ao verificar autenticação:', error);
+        localStorage.removeItem('token');
         router.push('/login');
       }
     };
 
-    fetchUser();
-  }, [router]);
+    checkAuth();
+  }, []);
 
-  if (!user) return <Typography>Carregando...</Typography>;
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/login');
+  };
+
+  const handleRegisterProfessional = () => {
+    router.push('/register');
+  };
+
+  const handleListProfessionals = () => {
+    router.push('/list');
+  };
+
+  if (!user) {
+    return <Typography>Carregando...</Typography>;
+  }
 
   return (
     <Container>
-      <Typography variant="h4" marginBottom={4}>
-        Bem-vindo, {user.email}!
-      </Typography>
-      <Box display="flex" flexDirection="column" alignItems="center" marginTop={4}>
-        <Button variant="contained" color="primary" onClick={() => router.push('/register')} style={{ marginBottom: '20px', width: '200px' }}>
-          Registrar Profissional
+      <Typography variant="h4" gutterBottom>Bem-vindo, {user.email}!</Typography>
+      <Box display="flex" flexDirection="column" gap={2} mt={4}>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRegisterProfessional}
+        >
+          Cadastrar Profissional
         </Button>
-        <Button variant="contained" color="secondary" onClick={() => router.push('/list')} style={{ width: '200px' }}>
+        <Button 
+          variant="contained" 
+          color="secondary" 
+          onClick={handleListProfessionals}
+        >
           Listar Profissionais
+        </Button>
+        <Button 
+          variant="outlined" 
+          color="error" 
+          onClick={handleLogout}
+        >
+          Logout
         </Button>
       </Box>
     </Container>

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Container, Typography, TextField, Button, Box, Stack, Snackbar, Alert, Grid } from '@mui/material';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
 const RegisterProfessional = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [qualifications, setQualifications] = useState([{ id: 1, value: '' }]); // Armazena as qualificações
+  const [qualifications, setQualifications] = useState([{ id: 1, value: '' }]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -33,17 +35,26 @@ const RegisterProfessional = () => {
     const qualificationValues = qualifications.map((qual) => qual.value).filter((val) => val !== '');
     
     try {
-      const response = await fetch('http://localhost:3001/professionals', {
+      const token = localStorage.getItem('token');
+      console.log('Enviando requisição para:', `${API_URL}/professionals`);
+      const response = await fetch(`${API_URL}/professionals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ name, email, qualifications: qualificationValues }),
       });
 
+      console.log('Resposta recebida:', response);
+
       if (!response.ok) {
-        throw new Error('Erro ao registrar profissional');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao registrar profissional');
       }
+
+      const data = await response.json();
+      console.log('Dados recebidos:', data);
 
       setSnackbarMessage('Profissional cadastrado com sucesso!');
       setSnackbarSeverity('success');
@@ -57,6 +68,7 @@ const RegisterProfessional = () => {
       // Redirecionar após 2 segundos
       setTimeout(() => router.push('/list'), 2000);
     } catch (error) {
+      console.error('Erro detalhado:', error);
       setSnackbarMessage(error.message || 'Erro ao cadastrar profissional');
       setSnackbarSeverity('error');
       setOpenSnackbar(true);
@@ -92,7 +104,6 @@ const RegisterProfessional = () => {
           type="email"
         />
 
-        {/* Campos de qualificação dinâmicos */}
         {qualifications.map((qualification, index) => (
           <Grid container spacing={2} key={qualification.id} alignItems="center" sx={{ marginY: 1 }}>
             <Grid item xs={10}>
@@ -109,7 +120,7 @@ const RegisterProfessional = () => {
             <Grid item xs={2} style={{ display: 'flex', alignItems: 'center' }}>
               <Typography
                 onClick={() => handleRemoveQualification(index)}
-                color="primary"  // Muda o texto para azul
+                color="primary"
                 style={{ cursor: 'pointer', marginRight: 8 }}
               >
                 REMOVER
@@ -118,7 +129,6 @@ const RegisterProfessional = () => {
           </Grid>
         ))}
 
-        {/* Opção de adicionar nova qualificação */}
         <Typography
           onClick={handleAddQualification}
           color="primary"
@@ -127,7 +137,6 @@ const RegisterProfessional = () => {
           ADICIONAR QUALIFICAÇÃO
         </Typography>
 
-        {/* Botão de Cadastrar */}
         <Box display="flex" justifyContent="space-between" marginTop={4}>
           <Button type="submit" variant="contained" color="primary">
             Cadastrar
